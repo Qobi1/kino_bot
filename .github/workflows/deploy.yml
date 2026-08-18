@@ -46,4 +46,4 @@ jobs:
             pip install -r requirements.txt
 
             # Restart bot service managed by systemd
-            sudo systemctl restart kino.service
+            sudo systemctl restart kino_bot.service
