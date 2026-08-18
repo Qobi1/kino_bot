@@ -1,0 +1,49 @@
+name: Deploy Telegram Bot
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Run Tests & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+  deploy:
+    name: Deploy to Server via SSH
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute deployment commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Navigate to bot directory inside bots folder
+            cd ~/bots/kino_bot
+
+            # Pull latest changes from GitHub
+            git pull origin main
+
+            # Activate virtual environment & update dependencies
+            source venv/bin/activate
+            pip install -r requirements.txt
+
+            # Restart bot service managed by systemd
+            sudo systemctl restart kino.service
